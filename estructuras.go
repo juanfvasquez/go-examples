@@ -20,6 +20,19 @@ func (humano *Humano) cambiarValores(nombre string, edad int) {
 	humano.edad = edad
 }
 
+type Estudiante struct {
+	nombre string
+	calificaciones []float32
+	promedio
+}
+
+func (estudiante Estudiante) calcularProm() float32 {
+	for _, val := range estudiante.calificaciones {
+		// calculo
+	}
+	estudiante.promedio = promedio
+}
+
 func main() {
 	// persona := Humano{"Juan", 30, mapa}
 	persona := Humano{nombre: "Juan", edad: 30}
