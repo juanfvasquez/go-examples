@@ -9,9 +9,16 @@ import (
 )
 
 type Curso struct {
-	Id int
-	Nombre string
-	Descripcion string
+	Id int `json:"id"`
+	Nombre string `json:"nombre"`
+	Descripcion string `json:"descripcion"`
+	Autor Datos `json:"autor"`
+}
+
+type Datos struct {
+	Nombre string `json:"nombre_autor"`
+	Apellido string `json:"apellido_autor"`
+	Edad int `json:"edad_autor"`
 }
 
 const PUERTO = ":5000"
@@ -57,9 +64,10 @@ func parametros(w http.ResponseWriter, r *http.Request) {
 }
 
 func enviarJson(w http.ResponseWriter, r *http.Request) {
-	curso1 := Curso{1, "Curso de Go", "Curso de introducción a Go (Golang)"}
-	curso2 := Curso{2, "Curso de Flutter", "Curso de introducción a Flutter"}
-	curso3 := Curso{3, "Curso de Angular", "Curso de introducción a Angular"}
+	datos := Datos{Nombre: "Juan", Apellido: "Vásquez", Edad: 28}
+	curso1 := Curso{1, "Curso de Go", "Curso de introducción a Go (Golang)", datos}
+	curso2 := Curso{2, "Curso de Flutter", "Curso de introducción a Flutter", datos}
+	curso3 := Curso{3, "Curso de Angular", "Curso de introducción a Angular", datos}
 	cursos := []Curso{curso1, curso2, curso3}
 	json.NewEncoder(w).Encode(cursos)
 }
