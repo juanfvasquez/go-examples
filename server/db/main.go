@@ -25,6 +25,7 @@ var db *sql.DB
 var err error
 
 func main() {
+	insertarCategoria("Cat 101", "Descripción categoría 101")
 	listarCategorias()
 }
 
@@ -67,4 +68,19 @@ func listarCategorias() {
 		listaCat = append(listaCat, cat)
 	}
 	log.Println(listaCat)
+}
+
+func insertarCategoria(nombre, descripcion string) {
+	conectar()
+	defer func () {
+		db.Close()
+		log.Println("Conexión cerrada")
+	}()
+	query := fmt.Sprintf("INSERT INTO categorias(nombre, descripcion) VALUES ('%s', '%s')", nombre, descripcion)
+	log.Println(query)
+	_, err := db.Query(query)
+	if err != nil {
+		log.Println("Error insertando categoría")
+		panic(err)
+	}
 }
