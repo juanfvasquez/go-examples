@@ -3,13 +3,14 @@ package main
 import (
 	"log"
 	"net/http"
-	"fmt"
 	"encoding/json"
 	"strconv"
 
 	"github.com/gorilla/mux"
 
 	"./database"
+	"./models"
+	"./respuestas"
 )
 
 // type Persona struct {
@@ -26,25 +27,72 @@ func main() {
 	router.HandleFunc("/cursos", listarCursos).Methods("GET")
 	router.HandleFunc("/curso/{curso}", verCurso).Methods("GET")
 	router.HandleFunc("/curso", crearCurso).Methods("POST")
+	router.HandleFunc("/curso/{curso}", actualizarCurso).Methods("PUT")
+	router.HandleFunc("/curso/{curso}", eliminarCurso).Methods("DELETE")
 	http.Handle("/", router)
 	log.Fatal(http.ListenAndServe(PORT, nil))
 }
 
 func listarCursos(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "application/json")
 	cursos := database.GetCursos()
-	json.NewEncoder(w).Encode(cursos)
+	respuestas.ResponderJSON(cursos, w)
 }
 
 func verCurso(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	idCurso, _ := strconv.Atoi(vars["curso"])
+	idCurso, err := strconv.Atoi(vars["curso"])
+	if responderSiHayError(err, "ID no válido", -1, w) {
+		return
+	}
 	curso := database.VerCurso(uint(idCurso))
-	w.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(curso)
+	respuestas.ResponderJSON(curso, w)
 }
 
 func crearCurso(w http.ResponseWriter, r *http.Request) {
-	database.CrearCurso("Curso de Go", "Introducción al Golang")
-	fmt.Fprint(w, "Ok")
+	var body models.Curso
+	err := json.NewDecoder(r.Body).Decode(&body)
+	validarError(err, "Error convirtiendo body...")
+	curso := database.CrearCurso(body.Nombre, body.Descripcion)
+	respuestas.ResponderJSON(curso, w)
+}
+
+func actualizarCurso(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idCurso, err := strconv.Atoi(vars["curso"])
+	if responderSiHayError(err, "ID no válido", -1, w) {
+		return
+	}
+	var body models.Curso
+	err = json.NewDecoder(r.Body).Decode(&body)
+	validarError(err, "Error convirtiendo body...")
+	curso := database.ActualizarCurso(uint(idCurso), body.Nombre, body.Descripcion)
+	respuestas.ResponderJSON(curso, w)
+}
+
+func eliminarCurso(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idCurso, err := strconv.Atoi(vars["curso"])
+	if responderSiHayError(err, "ID no válido", -1, w) {
+		return
+	}
+	database.EliminarCurso(uint(idCurso))
+	respuestas.ResponderJSON(models.Respuesta{Mensaje: "Ok", Codigo: 1}, w)
+}
+
+func validarError(err error, mensaje string) {
+	if err != nil {
+		log.Println(mensaje)
+		panic(err)
+	}
+}
+
+func responderSiHayError(err error, mensaje string, codigo int, w http.ResponseWriter) bool{
+	if err != nil {
+		respuestas.ResponderJSON(
+			models.Respuesta{Mensaje: mensaje, Codigo: codigo},
+			w,
+		)
+		return true
+	}
+	return false
 }
